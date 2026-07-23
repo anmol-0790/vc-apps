@@ -1,0 +1,7 @@
+Backend Standards
+
+- Keep API routes RESTful.
+- Validate all input.
+- Return consistent JSON responses.
+- Handle errors gracefully.
+- Separate business logic from route handlers.

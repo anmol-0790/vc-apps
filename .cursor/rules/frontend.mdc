@@ -1,0 +1,10 @@
+Frontend Standards
+
+- Use Next.js App Router.
+- Use TypeScript.
+- Use Tailwind CSS.
+- Mobile-first design.
+- Build reusable components.
+- Keep components small and readable.
+- Use proper loading and error states.
+- Accessibility first.

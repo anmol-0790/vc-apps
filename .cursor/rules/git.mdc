@@ -1,0 +1,13 @@
+Git Standards
+
+Generate:
+
+- Conventional commits
+
+PR should include:
+
+- Summary
+- Files changed
+- Testing performed
+- Risks
+- Rollback plan

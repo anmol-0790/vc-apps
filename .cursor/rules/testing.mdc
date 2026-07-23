@@ -1,0 +1,10 @@
+Testing Standards
+
+Always generate:
+
+- Unit tests
+- Form validation tests
+- Error state tests
+- Success state tests
+
+Never leave new features without tests.
