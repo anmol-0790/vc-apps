@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState, useSyncExternalStore } from "react";
 import type { ChangeEvent, FormEvent } from "react";
+import Link from "next/link";
 import { Alert } from "@/components/ui/Alert";
 import { Button } from "@/components/ui/Button";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -376,9 +377,9 @@ export function LoginForm() {
 
         <p className="mt-5 text-center text-[13.5px] text-slate-500">
           Don&apos;t have an account?{" "}
-          <a href="#" className={cn(linkPrimary, "font-semibold")}>
+          <Link href="/signup" className={cn(linkPrimary, "font-semibold")}>
             Create a free account
-          </a>
+          </Link>
         </p>
       </div>
     </div>

@@ -145,6 +145,6 @@ describe("LoginForm", () => {
 
     expect(
       screen.getByRole("link", { name: /create a free account/i }),
-    ).toBeInTheDocument();
+    ).toHaveAttribute("href", "/signup");
   });
 });

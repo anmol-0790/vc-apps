@@ -3,9 +3,9 @@
 import { Fragment } from "react";
 import Link from "next/link";
 import { LoginBackground, useLoginCanvasPointer } from "@/components/login/LoginBackground";
-import { LoginForm } from "@/components/login/LoginForm";
 import { Logo } from "@/components/login/Logo";
 import { TrustBadge } from "@/components/login/TrustBadge";
+import { SignupForm } from "@/components/signup/SignupForm";
 import { cn, linkMuted, surfaceControl } from "@/lib/cn";
 
 const trustItems = [
@@ -64,7 +64,7 @@ const trustItems = [
   },
 ] as const;
 
-export function LoginPageView() {
+export function SignupPageView() {
   const { hovering, cursor, canvasHandlers } = useLoginCanvasPointer();
 
   return (
@@ -76,10 +76,10 @@ export function LoginPageView() {
 
       <div className="relative z-10 flex min-h-dvh flex-col">
         <a
-          href="#login-main"
+          href="#signup-main"
           className="sr-only focus:not-sr-only focus:absolute focus:top-3 focus:left-3 focus:z-20 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:font-medium focus:text-slate-800 focus:shadow-md"
         >
-          Skip to sign in
+          Skip to create account
         </a>
 
         <header className="flex items-center justify-between gap-3 px-4 py-4 sm:gap-4 sm:px-8 sm:py-5">
@@ -92,26 +92,26 @@ export function LoginPageView() {
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <span className="hidden text-[13px] text-slate-500 md:inline">
-              Don&apos;t have an account?
+              Already have an account?
             </span>
             <Link
-              href="/signup"
+              href="/login"
               className={cn(
                 surfaceControl,
                 "inline-flex h-9 min-h-9 items-center px-3.5 text-[13px] font-medium text-slate-700 sm:px-4",
               )}
             >
-              Create account
+              Sign in
             </Link>
           </div>
         </header>
 
         <main
-          id="login-main"
+          id="signup-main"
           className="flex flex-1 items-center justify-center px-4 py-8 sm:px-6 sm:py-12"
         >
           <div className="w-full max-w-[400px] animate-fade-up">
-            <LoginForm />
+            <SignupForm />
 
             <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2.5">
               {trustItems.map((item, index) => (
@@ -128,7 +128,7 @@ export function LoginPageView() {
             </div>
 
             <p className="mt-5 text-center text-[12px] leading-relaxed text-slate-400 sm:mt-6">
-              By signing in, you agree to our{" "}
+              By creating an account, you agree to our{" "}
               <a href="#" className={linkMuted}>
                 Terms of Service
               </a>{" "}
