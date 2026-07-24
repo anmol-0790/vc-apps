@@ -1,19 +1,15 @@
-import type { LoginSuccess } from "@/lib/auth/types";
-import {
-  isApiErrorBody,
-  isLoginSuccess,
-} from "@/lib/api/response";
+import type { AuthSuccess } from "@/lib/auth/types";
+import { isAuthSuccess } from "@/lib/api/response";
+import { apiJsonPost } from "@/lib/api/client";
+import { isValidEmail } from "@/lib/validation/email";
 
+export { isValidEmail };
 export const REMEMBERED_EMAIL_KEY = "taskflow.login.email";
 
 export type LoginFieldErrors = {
   email?: string;
   password?: string;
 };
-
-export function isValidEmail(value: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
-}
 
 export function validateLoginFields(
   email: string,
@@ -88,44 +84,15 @@ function toFieldErrors(
 export async function loginRequest(
   email: string,
   password: string,
-): Promise<LoginSuccess> {
-  const response = await fetch("/api/auth/login", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
-  });
-
-  let payload: unknown = null;
-  try {
-    payload = await response.json();
-  } catch {
-    throw new LoginRequestError("Unable to sign in. Please try again.", {
-      status: response.status,
-      code: "INVALID_RESPONSE",
-    });
-  }
-
-  if (!response.ok) {
-    if (isApiErrorBody(payload)) {
-      throw new LoginRequestError(payload.error.message, {
-        status: response.status,
-        code: payload.error.code,
-        fields: toFieldErrors(payload.error.fields),
-      });
-    }
-
-    throw new LoginRequestError("Unable to sign in. Please try again.", {
-      status: response.status,
-      code: "UNKNOWN_ERROR",
-    });
-  }
-
-  if (!isLoginSuccess(payload)) {
-    throw new LoginRequestError("Unable to sign in. Please try again.", {
-      status: response.status,
-      code: "INVALID_RESPONSE",
-    });
-  }
-
-  return payload;
+): Promise<AuthSuccess> {
+  return apiJsonPost<AuthSuccess, LoginFieldErrors>(
+    "/api/auth/login",
+    { email, password },
+    {
+      ErrorClass: LoginRequestError,
+      fallbackMessage: "Unable to sign in. Please try again.",
+      mapFields: toFieldErrors,
+      parseSuccess: isAuthSuccess,
+    },
+  );
 }

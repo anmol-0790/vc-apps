@@ -57,6 +57,8 @@ taskflow-ai/
 Auth is backed by **Supabase Auth**. Configure env from `.env.example`.  
 For local POC, disable **Confirm email** in the Supabase dashboard so signup returns a session immediately.
 
+Technical debt (known gaps, no feature work): [`docs/TECH_DEBT.md`](./docs/TECH_DEBT.md).
+
 ```text
 /login → LoginForm → loginRequest() → POST /api/auth/login → authenticateUser() → Supabase
 /signup → SignupForm → signupRequest() → POST /api/auth/register → registerUser() → Supabase

@@ -3,8 +3,9 @@ import {
   validateSignupFields,
   type SignupFieldErrors,
 } from "@/lib/signup";
-import type { LoginSuccess } from "@/lib/auth/types";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { AuthSuccess } from "@/lib/auth/types";
+import { getSupabaseAuthClient } from "@/lib/supabase/auth-client";
+import { logAuth } from "@/lib/logger";
 
 export type SignupCredentials = {
   name: string;
@@ -28,10 +29,14 @@ export type SignupFailure =
   | {
       kind: "config";
       message: string;
+    }
+  | {
+      kind: "provider";
+      message: string;
     };
 
 export type SignupResult =
-  | { ok: true; data: LoginSuccess }
+  | { ok: true; data: AuthSuccess }
   | { ok: false; error: SignupFailure };
 
 function isEmailTakenError(message: string) {
@@ -76,20 +81,15 @@ export async function registerUser(
     };
   }
 
-  let client: SupabaseClient;
-  try {
-    client = supabase ?? (await createSupabaseServerClient());
-  } catch {
+  const clientResult = await getSupabaseAuthClient(supabase);
+  if (!clientResult.ok) {
     return {
       ok: false,
-      error: {
-        kind: "config",
-        message: "Authentication is not configured. Set Supabase env vars.",
-      },
+      error: { kind: "config", message: clientResult.message },
     };
   }
 
-  const { data, error } = await client.auth.signUp({
+  const { data, error } = await clientResult.client.auth.signUp({
     email,
     password,
     options: {
@@ -98,6 +98,11 @@ export async function registerUser(
   });
 
   if (error) {
+    logAuth("warn", "signup_failed", {
+      status: error.status ?? 0,
+      providerCode: error.code ?? "none",
+    });
+
     if (isEmailTakenError(error.message)) {
       return {
         ok: false,
@@ -112,23 +117,27 @@ export async function registerUser(
     return {
       ok: false,
       error: {
-        kind: "validation",
-        fields: { email: error.message },
-        message: error.message,
+        kind: "provider",
+        message: "Unable to create account. Please try again.",
       },
     };
   }
 
   if (!data.user) {
+    logAuth("error", "signup_missing_user");
     return {
       ok: false,
       error: {
-        kind: "validation",
-        fields: {},
+        kind: "provider",
         message: "Unable to create account. Please try again.",
       },
     };
   }
+
+  logAuth("info", "signup_succeeded", {
+    userId: data.user.id,
+    hasSession: Boolean(data.session),
+  });
 
   // When email confirmation is enabled, session may be null until the user confirms.
   return {

@@ -1,6 +1,7 @@
-import type { LoginSuccess } from "@/lib/auth/types";
-import { isApiErrorBody, isLoginSuccess } from "@/lib/api/response";
-import { isValidEmail } from "@/lib/login";
+import type { AuthSuccess } from "@/lib/auth/types";
+import { isAuthSuccess } from "@/lib/api/response";
+import { apiJsonPost } from "@/lib/api/client";
+import { isValidEmail } from "@/lib/validation/email";
 
 export type SignupFieldErrors = {
   name?: string;
@@ -116,44 +117,15 @@ export async function signupRequest(input: {
   password: string;
   confirmPassword: string;
   termsAccepted: boolean;
-}): Promise<LoginSuccess> {
-  const response = await fetch("/api/auth/register", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
-  });
-
-  let payload: unknown = null;
-  try {
-    payload = await response.json();
-  } catch {
-    throw new SignupRequestError("Unable to create account. Please try again.", {
-      status: response.status,
-      code: "INVALID_RESPONSE",
-    });
-  }
-
-  if (!response.ok) {
-    if (isApiErrorBody(payload)) {
-      throw new SignupRequestError(payload.error.message, {
-        status: response.status,
-        code: payload.error.code,
-        fields: toFieldErrors(payload.error.fields),
-      });
-    }
-
-    throw new SignupRequestError("Unable to create account. Please try again.", {
-      status: response.status,
-      code: "UNKNOWN_ERROR",
-    });
-  }
-
-  if (!isLoginSuccess(payload)) {
-    throw new SignupRequestError("Unable to create account. Please try again.", {
-      status: response.status,
-      code: "INVALID_RESPONSE",
-    });
-  }
-
-  return payload;
+}): Promise<AuthSuccess> {
+  return apiJsonPost<AuthSuccess, SignupFieldErrors>(
+    "/api/auth/register",
+    input,
+    {
+      ErrorClass: SignupRequestError,
+      fallbackMessage: "Unable to create account. Please try again.",
+      mapFields: toFieldErrors,
+      parseSuccess: isAuthSuccess,
+    },
+  );
 }

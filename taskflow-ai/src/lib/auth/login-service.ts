@@ -3,10 +3,11 @@ import {
   validateLoginFields,
   type LoginFieldErrors,
 } from "@/lib/login";
-import type { LoginCredentials, LoginSuccess } from "@/lib/auth/types";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { LoginCredentials, AuthSuccess } from "@/lib/auth/types";
+import { getSupabaseAuthClient } from "@/lib/supabase/auth-client";
+import { logAuth } from "@/lib/logger";
 
-export type { LoginCredentials, LoginSuccess, LoginUser } from "@/lib/auth/types";
+export type { LoginCredentials, AuthSuccess, LoginSuccess, LoginUser, AuthUser } from "@/lib/auth/types";
 
 export type LoginFailure =
   | {
@@ -21,11 +22,24 @@ export type LoginFailure =
   | {
       kind: "config";
       message: string;
+    }
+  | {
+      kind: "provider";
+      message: string;
     };
 
 export type LoginResult =
-  | { ok: true; data: LoginSuccess }
+  | { ok: true; data: AuthSuccess }
   | { ok: false; error: LoginFailure };
+
+function isInvalidCredentialError(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("invalid login credentials") ||
+    normalized.includes("invalid credentials") ||
+    normalized.includes("email not confirmed")
+  );
+}
 
 /**
  * Authenticate with Supabase email/password.
@@ -50,25 +64,36 @@ export async function authenticateUser(
     };
   }
 
-  let client: SupabaseClient;
-  try {
-    client = supabase ?? (await createSupabaseServerClient());
-  } catch {
+  const clientResult = await getSupabaseAuthClient(supabase);
+  if (!clientResult.ok) {
     return {
       ok: false,
-      error: {
-        kind: "config",
-        message: "Authentication is not configured. Set Supabase env vars.",
-      },
+      error: { kind: "config", message: clientResult.message },
     };
   }
 
-  const { data, error } = await client.auth.signInWithPassword({
+  const { data, error } = await clientResult.client.auth.signInWithPassword({
     email,
     password,
   });
 
   if (error || !data.session || !data.user) {
+    const providerMessage = error?.message ?? "missing_session";
+    logAuth("warn", "login_failed", {
+      status: error?.status ?? 0,
+      providerCode: error?.code ?? "none",
+    });
+
+    if (error && !isInvalidCredentialError(providerMessage)) {
+      return {
+        ok: false,
+        error: {
+          kind: "provider",
+          message: "Unable to sign in. Please try again.",
+        },
+      };
+    }
+
     return {
       ok: false,
       error: {
@@ -77,6 +102,8 @@ export async function authenticateUser(
       },
     };
   }
+
+  logAuth("info", "login_succeeded", { userId: data.user.id });
 
   return {
     ok: true,
