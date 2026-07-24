@@ -1,24 +1,13 @@
-import { NextRequest } from "next/server";
 import { authenticateUser } from "@/lib/auth/login-service";
+import { parseJsonObjectBody } from "@/lib/api/request";
 import { jsonError, jsonOk } from "@/lib/api/response";
+import { logAuth } from "@/lib/logger";
 
-export async function POST(request: NextRequest) {
-  let body: unknown;
+export async function POST(request: Request) {
+  const parsed = await parseJsonObjectBody(request);
+  if (!parsed.ok) return parsed.response;
 
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError("VALIDATION_ERROR", "Request body must be valid JSON.", 400);
-  }
-
-  if (!body || typeof body !== "object") {
-    return jsonError("VALIDATION_ERROR", "Request body must be an object.", 400);
-  }
-
-  const { email, password } = body as {
-    email?: unknown;
-    password?: unknown;
-  };
+  const { email, password } = parsed.body;
 
   if (typeof email !== "string" || typeof password !== "string") {
     return jsonError(
@@ -29,7 +18,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = authenticateUser({ email, password });
+    const result = await authenticateUser({ email, password });
 
     if (!result.ok) {
       if (result.error.kind === "validation") {
@@ -41,11 +30,18 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (result.error.kind === "config" || result.error.kind === "provider") {
+        return jsonError("INTERNAL_ERROR", result.error.message, 500);
+      }
+
       return jsonError("INVALID_CREDENTIALS", result.error.message, 401);
     }
 
     return jsonOk(result.data);
-  } catch {
+  } catch (error) {
+    logAuth("error", "login_route_unexpected", {
+      reason: error instanceof Error ? error.name : "unknown",
+    });
     return jsonError(
       "INTERNAL_ERROR",
       "Unable to sign in. Please try again.",

@@ -1,12 +1,15 @@
 # Auth API
 
+Auth is backed by **Supabase Auth** (email + password).  
+Set `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` (see `.env.example`).
+
 ## `POST /api/auth/login`
 
 Authenticate a user with email and password.
 
 ### Auth
 
-None (public).
+None (public). Sets Supabase auth cookies on success.
 
 ### Request body
 
@@ -34,14 +37,15 @@ None (public).
 }
 ```
 
+`token` is the Supabase access token.
+
 ### Errors
 
 | Status | Code | When |
 |--------|------|------|
 | `400` | `VALIDATION_ERROR` | Missing/invalid body or fields |
 | `401` | `INVALID_CREDENTIALS` | Email/password rejected |
-| `405` | `METHOD_NOT_ALLOWED` | Non-POST method |
-| `500` | `INTERNAL_ERROR` | Unexpected failure |
+| `500` | `INTERNAL_ERROR` | Missing env / unexpected failure |
 
 Error body shape:
 
@@ -57,9 +61,30 @@ Error body shape:
 
 `fields` is optional and only present for validation errors.
 
-### POC credentials
+## `POST /api/auth/register`
 
-| Email | Password | Result |
-|-------|----------|--------|
-| `fail@example.com` | any valid password | `401` |
-| any other valid email | any valid password | `200` |
+Create an account with email and password.
+
+### Request body
+
+```json
+{
+  "name": "string",
+  "email": "string",
+  "password": "string",
+  "confirmPassword": "string",
+  "termsAccepted": true
+}
+```
+
+### Success — `201`
+
+Same shape as login success. If Supabase email confirmation is enabled, `token` may be `""` until the user confirms.
+
+### Errors
+
+| Status | Code | When |
+|--------|------|------|
+| `400` | `VALIDATION_ERROR` | Invalid fields |
+| `409` | `EMAIL_TAKEN` | Email already registered |
+| `500` | `INTERNAL_ERROR` | Missing env / unexpected failure |

@@ -1,12 +1,19 @@
-export type LoginUser = {
+export type AuthUser = {
   id: string;
   email: string;
 };
 
-export type LoginSuccess = {
+/** Session payload returned by login/register APIs. */
+export type AuthSuccess = {
   token: string;
-  user: LoginUser;
+  user: AuthUser;
 };
+
+/** @deprecated Prefer AuthSuccess — kept for existing imports. */
+export type LoginSuccess = AuthSuccess;
+
+/** @deprecated Prefer AuthUser */
+export type LoginUser = AuthUser;
 
 export type LoginCredentials = {
   email: string;

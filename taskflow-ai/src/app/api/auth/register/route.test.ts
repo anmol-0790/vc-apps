@@ -32,7 +32,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("returns 201 on successful registration", async () => {
-    mockedRegister.mockReturnValue({
+    mockedRegister.mockResolvedValue({
       ok: true,
       data: {
         token: "tok_123",
@@ -51,7 +51,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("returns 409 when email is already taken", async () => {
-    mockedRegister.mockReturnValue({
+    mockedRegister.mockResolvedValue({
       ok: false,
       error: {
         kind: "email_taken",
@@ -81,7 +81,7 @@ describe("POST /api/auth/register", () => {
   });
 
   it("returns 400 when the service reports validation errors", async () => {
-    mockedRegister.mockReturnValue({
+    mockedRegister.mockResolvedValue({
       ok: false,
       error: {
         kind: "validation",

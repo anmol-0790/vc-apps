@@ -24,7 +24,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("returns 200 on successful authentication", async () => {
-    mockedAuthenticate.mockReturnValue({
+    mockedAuthenticate.mockResolvedValue({
       ok: true,
       data: {
         token: "tok_123",
@@ -45,7 +45,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("returns 401 when credentials are invalid", async () => {
-    mockedAuthenticate.mockReturnValue({
+    mockedAuthenticate.mockResolvedValue({
       ok: false,
       error: {
         kind: "invalid_credentials",
@@ -79,7 +79,7 @@ describe("POST /api/auth/login", () => {
   });
 
   it("returns 400 when the service reports validation errors", async () => {
-    mockedAuthenticate.mockReturnValue({
+    mockedAuthenticate.mockResolvedValue({
       ok: false,
       error: {
         kind: "validation",

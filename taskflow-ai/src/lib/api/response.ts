@@ -47,7 +47,7 @@ export function isApiErrorBody(value: unknown): value is ApiErrorBody {
   return typeof record.code === "string" && typeof record.message === "string";
 }
 
-export function isLoginSuccess(value: unknown): value is {
+export function isAuthSuccess(value: unknown): value is {
   token: string;
   user: { id: string; email: string };
 } {
@@ -63,3 +63,6 @@ export function isLoginSuccess(value: unknown): value is {
     typeof record.user.email === "string"
   );
 }
+
+/** @deprecated Prefer isAuthSuccess */
+export const isLoginSuccess = isAuthSuccess;

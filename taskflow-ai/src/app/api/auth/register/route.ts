@@ -1,27 +1,13 @@
-import { NextRequest } from "next/server";
 import { registerUser } from "@/lib/auth/signup-service";
+import { parseJsonObjectBody } from "@/lib/api/request";
 import { jsonError, jsonOk } from "@/lib/api/response";
+import { logAuth } from "@/lib/logger";
 
-export async function POST(request: NextRequest) {
-  let body: unknown;
+export async function POST(request: Request) {
+  const parsed = await parseJsonObjectBody(request);
+  if (!parsed.ok) return parsed.response;
 
-  try {
-    body = await request.json();
-  } catch {
-    return jsonError("VALIDATION_ERROR", "Request body must be valid JSON.", 400);
-  }
-
-  if (!body || typeof body !== "object") {
-    return jsonError("VALIDATION_ERROR", "Request body must be an object.", 400);
-  }
-
-  const { name, email, password, confirmPassword, termsAccepted } = body as {
-    name?: unknown;
-    email?: unknown;
-    password?: unknown;
-    confirmPassword?: unknown;
-    termsAccepted?: unknown;
-  };
+  const { name, email, password, confirmPassword, termsAccepted } = parsed.body;
 
   if (
     typeof name !== "string" ||
@@ -38,7 +24,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = registerUser({
+    const result = await registerUser({
       name,
       email,
       password,
@@ -56,6 +42,10 @@ export async function POST(request: NextRequest) {
         );
       }
 
+      if (result.error.kind === "config" || result.error.kind === "provider") {
+        return jsonError("INTERNAL_ERROR", result.error.message, 500);
+      }
+
       return jsonError(
         "EMAIL_TAKEN",
         result.error.message,
@@ -65,7 +55,10 @@ export async function POST(request: NextRequest) {
     }
 
     return jsonOk(result.data, 201);
-  } catch {
+  } catch (error) {
+    logAuth("error", "register_route_unexpected", {
+      reason: error instanceof Error ? error.name : "unknown",
+    });
     return jsonError(
       "INTERNAL_ERROR",
       "Unable to create account. Please try again.",

@@ -1,9 +1,20 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { authenticateUser } from "@/lib/auth/login-service";
 
+function mockSupabase(
+  result: Awaited<ReturnType<SupabaseClient["auth"]["signInWithPassword"]>>,
+) {
+  return {
+    auth: {
+      signInWithPassword: vi.fn().mockResolvedValue(result),
+    },
+  } as unknown as SupabaseClient;
+}
+
 describe("authenticateUser", () => {
-  it("returns validation errors for empty credentials", () => {
-    const result = authenticateUser({ email: "", password: "" });
+  it("returns validation errors for empty credentials", async () => {
+    const result = await authenticateUser({ email: "", password: "" });
 
     expect(result.ok).toBe(false);
     if (result.ok) return;
@@ -16,11 +27,20 @@ describe("authenticateUser", () => {
     });
   });
 
-  it("rejects invalid credentials for the POC failure email", () => {
-    const result = authenticateUser({
-      email: "fail@example.com",
-      password: "password1",
+  it("rejects invalid credentials from Supabase", async () => {
+    const supabase = mockSupabase({
+      data: { user: null, session: null },
+      error: {
+        message: "Invalid login credentials",
+        name: "AuthApiError",
+        status: 400,
+      } as never,
     });
+
+    const result = await authenticateUser(
+      { email: "user@example.com", password: "password1" },
+      supabase,
+    );
 
     expect(result).toEqual({
       ok: false,
@@ -31,17 +51,26 @@ describe("authenticateUser", () => {
     });
   });
 
-  it("returns a token and user on success", () => {
-    const result = authenticateUser({
-      email: "user@example.com",
-      password: "password1",
+  it("returns a token and user on success", async () => {
+    const supabase = mockSupabase({
+      data: {
+        user: { id: "user-1", email: "user@example.com" } as never,
+        session: { access_token: "jwt-token" } as never,
+      },
+      error: null,
     });
+
+    const result = await authenticateUser(
+      { email: "user@example.com", password: "password1" },
+      supabase,
+    );
 
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    expect(result.data.user.email).toBe("user@example.com");
-    expect(result.data.token).toMatch(/^poc-token-/);
-    expect(result.data.user.id).toMatch(/^user-/);
+    expect(result.data).toEqual({
+      token: "jwt-token",
+      user: { id: "user-1", email: "user@example.com" },
+    });
   });
 });
