@@ -10,6 +10,7 @@ export function Checkbox({
   label,
   className,
   disabled,
+  checked,
   ...props
 }: CheckboxProps) {
   const inputId = id ?? props.name;
@@ -18,20 +19,41 @@ export function Checkbox({
     <label
       htmlFor={inputId}
       className={cn(
-        "inline-flex items-center gap-2 text-sm text-zinc-700 select-none",
-        "dark:text-zinc-300",
+        "group inline-flex items-center gap-2.5 text-[13.5px] text-slate-600 select-none",
         disabled ? "cursor-not-allowed opacity-60" : "cursor-pointer",
         className,
       )}
     >
-      <input
-        id={inputId}
-        type="checkbox"
-        disabled={disabled}
-        className="size-4 rounded border-zinc-300 text-zinc-900 accent-zinc-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-zinc-900 focus-visible:ring-offset-1 dark:border-zinc-600 dark:accent-zinc-100"
-        {...props}
-      />
-      <span>{label}</span>
+      <span className="relative inline-flex size-[18px] shrink-0 items-center justify-center">
+        <input
+          id={inputId}
+          type="checkbox"
+          disabled={disabled}
+          checked={checked}
+          className="peer absolute inset-0 z-10 size-full cursor-pointer opacity-0 disabled:cursor-not-allowed"
+          {...props}
+        />
+        <span
+          aria-hidden
+          className={cn(
+            "pointer-events-none flex size-[18px] items-center justify-center rounded-md border-[1.5px] shadow-[0_1px_2px_rgba(0,0,0,0.05)] transition-colors",
+            "border-slate-300 bg-white [&_svg]:opacity-0",
+            "peer-checked:border-blue-600 peer-checked:bg-blue-600 peer-checked:[&_svg]:opacity-100",
+            "peer-focus-visible:ring-2 peer-focus-visible:ring-blue-500 peer-focus-visible:ring-offset-1",
+          )}
+        >
+          <svg width="10" height="8" viewBox="0 0 10 8" fill="none">
+            <path
+              d="M1 4L3.8 7L9 1"
+              stroke="white"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </span>
+      </span>
+      <span className="transition-colors group-hover:text-slate-800">{label}</span>
     </label>
   );
 }

@@ -9,9 +9,9 @@ type AlertProps = HTMLAttributes<HTMLDivElement> & {
 
 const variantClasses: Record<AlertVariant, string> = {
   error:
-    "border-red-200 bg-red-50 text-red-700 dark:border-red-900/60 dark:bg-red-950/50 dark:text-red-300",
+    "border-red-200 bg-red-50 text-red-700 shadow-[0_8px_24px_rgba(220,38,38,0.12)]",
   success:
-    "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900/60 dark:bg-emerald-950/40 dark:text-emerald-300",
+    "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_8px_24px_rgba(22,163,74,0.2)]",
 };
 
 export function Alert({
@@ -25,7 +25,7 @@ export function Alert({
     <div
       role={role ?? (variant === "error" ? "alert" : "status")}
       className={cn(
-        "rounded-lg border px-3 py-2 text-sm",
+        "flex items-start gap-2.5 rounded-xl border p-3.5 text-[13px] leading-snug font-medium sm:items-center",
         variantClasses[variant],
         className,
       )}
