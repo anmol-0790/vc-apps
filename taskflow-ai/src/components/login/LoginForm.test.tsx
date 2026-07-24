@@ -143,8 +143,9 @@ describe("LoginForm", () => {
   it("shows a create account signup option", () => {
     render(<LoginForm />);
 
-    expect(
-      screen.getByRole("link", { name: /create a free account/i }),
-    ).toHaveAttribute("href", "/signup");
+    expect(screen.getByRole("link", { name: /^sign up$/i })).toHaveAttribute(
+      "href",
+      "/signup",
+    );
   });
 });
