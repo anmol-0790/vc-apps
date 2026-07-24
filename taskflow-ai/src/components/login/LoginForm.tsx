@@ -378,7 +378,7 @@ export function LoginForm() {
         <p className="mt-5 text-center text-[13.5px] text-slate-500">
           Don&apos;t have an account?{" "}
           <Link href="/signup" className={cn(linkPrimary, "font-semibold")}>
-            Create a free account
+            Sign Up
           </Link>
         </p>
       </div>
