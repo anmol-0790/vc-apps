@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = authenticateUser({ email, password });
+    const result = await authenticateUser({ email, password });
 
     if (!result.ok) {
       if (result.error.kind === "validation") {
@@ -39,6 +39,10 @@ export async function POST(request: NextRequest) {
           400,
           result.error.fields,
         );
+      }
+
+      if (result.error.kind === "config") {
+        return jsonError("INTERNAL_ERROR", result.error.message, 500);
       }
 
       return jsonError("INVALID_CREDENTIALS", result.error.message, 401);

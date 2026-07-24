@@ -263,8 +263,13 @@ export function SignupForm() {
         password,
         confirmPassword,
         termsAccepted,
+      }).then((result) => {
+        setSuccessMessage(
+          result.token
+            ? "Account created successfully. Redirecting…"
+            : "Account created. Check your email to confirm, then sign in.",
+        );
       });
-      setSuccessMessage("Account created successfully. Redirecting…");
     } catch (error) {
       if (error instanceof SignupRequestError && error.fields) {
         setFieldErrors(error.fields);

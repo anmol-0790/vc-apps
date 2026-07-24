@@ -1,8 +1,10 @@
+import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   validateLoginFields,
   type LoginFieldErrors,
 } from "@/lib/login";
 import type { LoginCredentials, LoginSuccess } from "@/lib/auth/types";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 export type { LoginCredentials, LoginSuccess, LoginUser } from "@/lib/auth/types";
 
@@ -15,28 +17,24 @@ export type LoginFailure =
   | {
       kind: "invalid_credentials";
       message: string;
+    }
+  | {
+      kind: "config";
+      message: string;
     };
 
 export type LoginResult =
   | { ok: true; data: LoginSuccess }
   | { ok: false; error: LoginFailure };
 
-function toStableId(prefix: string, value: string) {
-  const normalized = value.toLowerCase();
-  let hash = 0;
-  for (let i = 0; i < normalized.length; i += 1) {
-    hash = (hash * 31 + normalized.charCodeAt(i)) >>> 0;
-  }
-  return `${prefix}-${hash.toString(16)}`;
-}
-
 /**
- * Authenticate credentials. POC: no real user store.
- * `fail@example.com` always fails; other valid credentials succeed.
+ * Authenticate with Supabase email/password.
+ * Sets auth cookies via the server client and returns the access token.
  */
-export function authenticateUser(
+export async function authenticateUser(
   credentials: LoginCredentials,
-): LoginResult {
+  supabase?: SupabaseClient,
+): Promise<LoginResult> {
   const email = credentials.email?.trim() ?? "";
   const password = credentials.password ?? "";
 
@@ -52,7 +50,25 @@ export function authenticateUser(
     };
   }
 
-  if (email.toLowerCase() === "fail@example.com") {
+  let client: SupabaseClient;
+  try {
+    client = supabase ?? (await createSupabaseServerClient());
+  } catch {
+    return {
+      ok: false,
+      error: {
+        kind: "config",
+        message: "Authentication is not configured. Set Supabase env vars.",
+      },
+    };
+  }
+
+  const { data, error } = await client.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error || !data.session || !data.user) {
     return {
       ok: false,
       error: {
@@ -65,10 +81,10 @@ export function authenticateUser(
   return {
     ok: true,
     data: {
-      token: toStableId("poc-token", email),
+      token: data.session.access_token,
       user: {
-        id: toStableId("user", email),
-        email,
+        id: data.user.id,
+        email: data.user.email ?? email,
       },
     },
   };

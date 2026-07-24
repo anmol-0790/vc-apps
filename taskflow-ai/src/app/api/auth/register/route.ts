@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const result = registerUser({
+    const result = await registerUser({
       name,
       email,
       password,
@@ -54,6 +54,10 @@ export async function POST(request: NextRequest) {
           400,
           result.error.fields,
         );
+      }
+
+      if (result.error.kind === "config") {
+        return jsonError("INTERNAL_ERROR", result.error.message, 500);
       }
 
       return jsonError(
